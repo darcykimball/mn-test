@@ -63,6 +63,7 @@ class Subscriber:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Subscribe to topics')
+    parser.add_argument('my_ip', type=str)
     parser.add_argument('broker_ip', type=str)
     parser.add_argument('port', type=int)
     parser.add_argument('topics', type=str, nargs='+')
@@ -71,6 +72,8 @@ if __name__ == '__main__':
 
 
     # Run as a listening subscriber
-    sub = Subscriber(args.broker_ip, args.port, args.topics)
+    sub = Subscriber(args.my_ip, args.broker_ip, args.port, args.topics)
 
+
+    print 'Starting subscriber %s' % sub.ip
     sub.start()

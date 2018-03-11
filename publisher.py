@@ -28,14 +28,17 @@ class Publisher():
 
 
     # For testing
-    def _periodic_bell(self, period=1):
+    def _periodic_bell(self, n, period=1):
         '''
-        Publish a bell message every period
+        Publish a bell message every period, n times
         '''
 
         while True:
-            self.publish('bell', 'ring ring ring') 
-            time.sleep(1)
+            try:
+                self.publish('bell', 'ring ring ring') 
+                time.sleep(1)
+            except:
+                print 'Trying to ring again...'
 
 
 if __name__ == '__main__':
@@ -49,4 +52,4 @@ if __name__ == '__main__':
     # Ghetto bell test
     pub = Publisher(args.broker_ip, args.port)
 
-    pub._periodic_bell()
+    pub._periodic_bell(3)

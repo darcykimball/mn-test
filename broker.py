@@ -104,5 +104,5 @@ if __name__ == '__main__':
 
     # Run as a listening broker
     broker = Broker(args.ip, args.port)
-
+    print 'Running broker on %s:%s' % (broker.ip, broker.port)
     broker.start()
