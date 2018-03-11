@@ -13,8 +13,10 @@ class Subscriber:
     Subscriber functionality
     '''
 
+    RECV_BUFSIZ = 4096
 
-    def __init__(self, broker_ip, port, topics, recv_action=print):
+
+    def __init__(self, broker_ip, port, topics, recv_action=sys.stdout.write):
         self.sub_id = NO_SUB_ID
         self.broker_ip = broker_ip
         self.broker_port = port
@@ -35,17 +37,17 @@ class Subscriber:
 
         # See if we were able to join
         s.settimeout(2) # Timeout after waiting a bit
-        reply = s.recv()
+        reply = s.recv(RECV_BUFSIZ)
         s.settimeout(None)
 
         if len(reply) == 0:
             raise UnableToJoinError('No reply from server')
 
         # FIXME: exception-safe socket close?
+    
+        #FIXME: remove
+        print 'reply : ' + reply
 
-
-        # FIXME remove
-        print 'reply: \n' + reply
         return reply
 
 
@@ -59,8 +61,8 @@ class Subscriber:
 
         assert fields[TOPICS_KEY] is not None
         assert fields[MSG_KEY] is not None
-        self.recv_action(msg)
 
+        self.recv_action(msg)
 
     
     class UnableToJoinError(Exception):
