@@ -6,7 +6,7 @@ import json
 import socket
 import sys
 
-import cenpubsub
+import cenpubsub as cps
 
 
 class Broker:
@@ -14,27 +14,27 @@ class Broker:
     Centralized (singleton) broker functionality
     '''
 
-    MAX_CONN = 5
     RECV_BUFSIZ = 4096
 
 
-    def __init__(self, ip, port, topics):
+    def __init__(self, ip, port, topics=[]):
         self.ip = ip 
         self.port = port
-        self.topics = topics
+        self.topics = topics # Unused for now
         self.subscribers = dict() # Mapping of topics to subscriber addresses
         self.sub_addrs = dict() # Mapping of subscriber IDs to addresses (IP/port)
         # Listen for connections
-        self.send_sock.socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.send_sock.bind((self.ip, self.port))
-        self.send_sock.listen(MAX_CONN)
+        self.send_sock.listen(cps.MAX_CONN)
 
 
     def start(self):
 
         while True:
             conn_sock = self.send_sock.accept()
-            received, (sender_ip, _) = conn_sock.recvfrom(RECV_BUFSIZ)
+            received, sender_addr = conn_sock.recvfrom(RECV_BUFSIZ)
+            sender_ip, _ = sender_addr
 
             msg = dict()
             try:
@@ -44,7 +44,8 @@ class Broker:
                 # Ignore this
                 print 'Got bad JSON! Ignoring...'
 
-            
+
+
     def forward_event(self, pub_msg):
         '''
         Forward published events to subscribers
@@ -59,7 +60,7 @@ class Broker:
                 s.send(EventMsg(t, pub_msg.msg).to_json())
     
 
-    def handle_msg(self, msg):
+    def handle_msg(self, msg, sender_ip):
         '''
         Handle a publish or subscribe message.
         
@@ -76,7 +77,11 @@ class Broker:
                 
                 # Update and/or add subscriptions
                 # FIXME: check set difference of topics?
-                self.subscribers[ID_KEY] = msg[TOPICS_KEY] 
+                for t in sub_msg[TOPICS_KEY]:
+                    if self.subscribers.get(t):
+                        self.subscribers[t].append(sender_ip)
+                    else:
+                        self.subscribers[t] = [sender_ip]
 
             elif PUB_MSG_KEY in msg:
                 # Forward to those who are subscribed

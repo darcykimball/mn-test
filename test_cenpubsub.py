@@ -11,6 +11,8 @@ from mininet.log import setLogLevel
 from cenpubsub import BROKER_PORT
 from star import StarTopo
 
+
+SCRIPT_DIR = '/home/vagrant/test/'
 LOG_DIR = '/home/vagrant/mnlogs/'
 
 
@@ -28,17 +30,17 @@ def test_cenpubsub(n=5):
     # Setup 1 broker and 1 publisher on first 2 nodes.
     broker_node = net.hosts[0]
     print 'mn: starting broker..'
-    broker_node.cmd('broker.py %s %s > %s 2>%s' %
-            (broker_node.IP(), BROKER_PORT, LOG_DIR + 'broker.out', LOG_DIR + 'broker.err'))
+    broker_node.sendCmd('%sbroker.py %s %s > %s 2>%s' %
+            (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'broker.out', LOG_DIR + 'broker.err'))
 
     # Setup subscribers
     print 'mn: starting hosts...'
     for host in net.hosts[2:]:
-        host.sendCmd('subscriber.py %s %s %s > %s 2>%s' % (host.IP(), broker_node.IP(), BROKER_PORT, LOG_DIR + host.name + '.out', LOG_DIR + host.name + '.err'))
+        host.sendCmd('%ssubscriber.py %s %s %s bell > %s 2>%s' % (SCRIPT_DIR, host.IP(), broker_node.IP(), BROKER_PORT, LOG_DIR + host.name + '.out', LOG_DIR + host.name + '.err'))
 
     pub_node = net.hosts[1]
     print 'mn: starting publisher'
-    pub_node.cmd('publisher.py %s %s > %s 2>%s' % (broker_node.IP(), BROKER_PORT, LOG_DIR + 'pub.out', LOG_DIR + 'pub.err'))
+    pub_node.cmd('%spublisher.py %s %s > %s 2>%s' % (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'pub.out', LOG_DIR + 'pub.err'))
 
     # Wait for stuff to happen
     time.sleep(n + 1)

@@ -22,6 +22,7 @@ NO_SUB_ID = -1 # Special id value for new subscription requests
 ID_KEY = 'ID'
 TOPICS_KEY = 'TOPICS'
 
+MAX_CONN = 5
 
 
 # Message types

@@ -5,7 +5,7 @@ import argparse
 import socket
 import time
 
-import cenpubsub
+import cenpubsub as cps
 
 
 class Publisher():
@@ -24,7 +24,7 @@ class Publisher():
         self.pub_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.pub_sock.connect((self.broker_ip, self.port))
 
-        self.pub_sock.send(EventMsg(topic, payload).to_json())
+        self.pub_sock.send(cps.EventMsg(topic, payload).to_json())
 
 
     # For testing
@@ -33,7 +33,7 @@ class Publisher():
         Publish a bell message every period, n times
         '''
 
-        while True:
+        for i in xrange(n):
             try:
                 self.publish('bell', 'ring ring ring') 
                 time.sleep(1)

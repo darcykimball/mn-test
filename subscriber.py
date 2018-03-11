@@ -5,7 +5,7 @@ import argparse
 import socket
 import sys
 
-import cenpubsub
+import cenpubsub as cps
 
 
 class Subscriber:
@@ -17,6 +17,7 @@ class Subscriber:
 
 
     def __init__(self, ip, broker_ip, port, topics, recv_action=sys.stdout.write):
+        self.ip = ip
         self.broker_ip = broker_ip
         self.broker_port = port
         self.topics = topics
@@ -24,7 +25,7 @@ class Subscriber:
 
         # Setup socket for receiving events
         self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.event_sock.bind((ip, SUB_PORT))
+        self.event_sock.bind((ip, cps.SUB_PORT))
         self.event_sock.listen(5)
 
 
@@ -36,7 +37,7 @@ class Subscriber:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.broker_ip, self.broker_port))
 
-        sub_msg = SubscribeMsg(topics)
+        sub_msg = cps.SubscribeMsg(self.topics)
         s.send(sub_msg.to_json())
 
 
