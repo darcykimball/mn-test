@@ -19,35 +19,45 @@ class Broker:
 
 
     def __init__(self, ip, port, topics):
-        self.broker_id = 777 # Arbitrary, and unused by any others
         self.ip = ip 
         self.port = port
         self.topics = topics
-        self.subscribers = dict() # Mapping of topics to subscriber IDs
+        self.subscribers = dict() # Mapping of topics to subscriber addresses
         self.sub_addrs = dict() # Mapping of subscriber IDs to addresses (IP/port)
+        # Listen for connections
+        self.send_sock.socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.send_sock.bind((self.ip, self.port))
+        self.send_sock.listen(MAX_CONN)
 
 
     def start(self):
-        # Listen for connections
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.ip, self.port))
-        s.listen(MAX_CONN)
 
         while True:
-            conn_sock = s.accept()
-            (received, addr) = conn_sock.recvfrom(RECV_BUFSIZ)
+            conn_sock = self.send_sock.accept()
+            received, (sender_ip, _) = conn_sock.recvfrom(RECV_BUFSIZ)
 
             msg = dict()
             try:
                 msg = json.loads(received)
+                reply_msg = self.handle_msg(msg)
             except TypeError:
                 # Ignore this
-                print 'Got bad JSON!'
+                print 'Got bad JSON! Ignoring...'
 
+            
+    def forward_event(self, pub_msg):
+        '''
+        Forward published events to subscribers
+        '''
 
-        broker_msg = SubscribeMsg(self.broker_id, topics)
-        s.send(broker_msg.to_json())
+        for t in pub_msg.topics:
+            sub_ips = self.subscribers[t]
+            for ip in sub_ips:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((ip, SUB_PORT))
 
+                s.send(EventMsg(t, pub_msg.msg).to_json())
+    
 
     def handle_msg(self, msg):
         '''
@@ -59,30 +69,24 @@ class Broker:
 
         reply_msgs = list()
         
-        # TODO/FIXME: totality of key existence checks?
-        if SUB_MSG_KEY in msg:
-            # Add a new subscription or update subscriptions
-            sub_msg = msg[SUB_MSG_KEY]
+        try:
+            if SUB_MSG_KEY in msg:
+                # Add a new subscription or update subscriptions
+                sub_msg = msg[SUB_MSG_KEY]
+                
+                # Update and/or add subscriptions
+                # FIXME: check set difference of topics?
+                self.subscribers[ID_KEY] = msg[TOPICS_KEY] 
 
-            if ID_KEY in sub_msg:
-                # Already in data base; just update subscriptions
-                # FIXME: check set difference?
-                self.subscribers[ID_KEY] = msg.[TOPICS_KEY] 
+            elif PUB_MSG_KEY in msg:
+                # Forward to those who are subscribed
+                self.forward_event(msg)
+            else:
+                raise BadPubSubMsgError('Unknown message type!')
 
-                # TODO
+        except KeyError:
+            raise BadPubSubMsgError('Malformed message!')
 
-        elif PUB_MSG_KEY in msg:
-            # Forward to those who are subscribed
-            pub_msg = msg[PUB_MSG_KEY]
-            assert len(pub_msg[TOPICS_KEY]) == 1
-
-
-            topic = pub_msg[TOPICS_KEY][0]
-            for sub in self.subscribers[topic]
-                reply_msgs.append(EventMsg(self.broker_id, pub_msg.topic, pub_msg.msg).to_json())
-
-        else:
-            raise BadPubSubMsgError
 
         return reply_msgs
     
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    # Run as a listening brokerscriber
+    # Run as a listening broker
     broker = Broker(args.ip, args.port)
 
     broker.start()

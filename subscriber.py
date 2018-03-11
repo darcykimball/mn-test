@@ -16,15 +16,19 @@ class Subscriber:
     RECV_BUFSIZ = 4096
 
 
-    def __init__(self, broker_ip, port, topics, recv_action=sys.stdout.write):
-        self.sub_id = NO_SUB_ID
+    def __init__(self, ip, broker_ip, port, topics, recv_action=sys.stdout.write):
         self.broker_ip = broker_ip
         self.broker_port = port
         self.topics = topics
         self.recv_action = recv_action
 
+        # Setup socket for receiving events
+        self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.event_sock.bind((ip, SUB_PORT))
+        self.event_sock.listen(5)
 
-    def join(self):
+
+    def subscribe(self):
         '''
         Try to join a pub/sub network
         '''
@@ -32,37 +36,25 @@ class Subscriber:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.broker_ip, self.broker_port))
 
-        sub_msg = SubscribeMsg(self.sub_id, topics)
+        sub_msg = SubscribeMsg(topics)
         s.send(sub_msg.to_json())
-
-        # See if we were able to join
-        s.settimeout(2) # Timeout after waiting a bit
-        reply = s.recv(RECV_BUFSIZ)
-        s.settimeout(None)
-
-        if len(reply) == 0:
-            raise UnableToJoinError('No reply from server')
-
-        # FIXME: exception-safe socket close?
-    
-        #FIXME: remove
-        print 'reply : ' + reply
-
-        return reply
 
 
     def start(self):
         # Try to join as a subscriber
-        reply = self.join()
-        msg = json.loads(reply)
+        self.subscribe()
 
-        assert msg[EVENT_MSG_KEY] is not None
-        fields = msg[EVENT_MSG_KEY]
+        # Wait for messages
+        while True:
+            conn_sock = self.event_sock.accept()
+            event = self.conn_sock.recv(RECV_BUFSIZ)
 
-        assert fields[TOPICS_KEY] is not None
-        assert fields[MSG_KEY] is not None
-
-        self.recv_action(msg)
+            try:
+                msg = json.loads(event)
+                self.recv_action(msg)
+            except KeyError, TypeError:
+                print 'Got bogus message, ignoring...'
+                continue
 
     
     class UnableToJoinError(Exception):

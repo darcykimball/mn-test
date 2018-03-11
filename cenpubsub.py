@@ -9,11 +9,13 @@ import json
 
 # Some constants
 
-CPUBSUB_PORT = 8888
+BROKER_PORT = 8888
+SUB_PORT = 9999
 
 SUB_MSG_KEY = 'SUB'
 PUB_MSG_KEY = 'PUB'
 EVENT_MSG_KEY = 'EVENT'
+PAYLOAD_KEY = 'PAYLOAD'
 
 NO_SUB_ID = -1 # Special id value for new subscription requests
 
@@ -35,16 +37,14 @@ class SubscribeMsg():
     '''
 
     
-    def __init__(self, topics, sub_id=NO_SUB_ID):
+    def __init__(self, topics):
         assert len(topics) > 0
-        self.sub_id = sub_id    
         self.topics = topics
 
     
     def to_json(self):
         d = {
             SUB_MSG_KEY: {
-                ID_KEY: self.sub_id,
                 TOPICS_KEY: self.topics
             }
         }
@@ -58,8 +58,7 @@ class PublishMsg():
     '''
 
     
-    def __init__(self, topic, msg, pub_id):
-        self.pub_id = pub_id
+    def __init__(self, topic, msg):
         self.topics = [topic]
         self.msg = msg
 
@@ -67,7 +66,6 @@ class PublishMsg():
     def to_json(self):
         d = {
             SUB_MSG_KEY: {
-                ID_KEY: self.pub_id,
                 TOPICS_KEY: self.topics
             }
         }
@@ -81,17 +79,16 @@ class EventMsg():
     '''
     
 
-    def __init__(self, topic, msg, broker_id):
-        self.broker_id = broker_id
+    def __init__(self, topic, payload):
         self.topics = [topic]
-        self.msg = msg
+        self.payload = payload
 
     
     def to_json(self):
         d = {
             EVENT_MSG_KEY: {
-                ID_KEY: self.broker_id,
-                TOPICS_KEY: self.topics
+                TOPICS_KEY: self.topics,
+                PAYLOAD_KEY: self.payload
             }
         }
 
