@@ -13,8 +13,6 @@ class Subscriber:
     Subscriber functionality
     '''
 
-    RECV_BUFSIZ = 4096
-
 
     def __init__(self, ip, broker_ip, port, topics, recv_action=sys.stdout.write):
         self.ip = ip
@@ -48,7 +46,7 @@ class Subscriber:
         # Wait for messages
         while True:
             conn_sock = self.event_sock.accept()
-            event = self.conn_sock.recv(RECV_BUFSIZ)
+            event = self.conn_sock.recv(cps.RECV_BUFSIZ)
 
             try:
                 msg = json.loads(event)

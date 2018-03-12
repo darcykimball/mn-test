@@ -32,18 +32,22 @@ def test_cenpubsub(n=5):
     print 'mn: starting broker..'
     broker_node.sendCmd('%sbroker.py %s %s > %s 2>%s' %
             (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'broker.out', LOG_DIR + 'broker.err'))
+    time.sleep(1)
 
     # Setup subscribers
     print 'mn: starting hosts...'
     for host in net.hosts[2:]:
         host.sendCmd('%ssubscriber.py %s %s %s bell > %s 2>%s' % (SCRIPT_DIR, host.IP(), broker_node.IP(), BROKER_PORT, LOG_DIR + host.name + '.out', LOG_DIR + host.name + '.err'))
+    
+    time.sleep(1)
 
+    
     pub_node = net.hosts[1]
     print 'mn: starting publisher'
     pub_node.cmd('%spublisher.py %s %s > %s 2>%s' % (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'pub.out', LOG_DIR + 'pub.err'))
 
     # Wait for stuff to happen
-    time.sleep(n + 1)
+    time.sleep(n)
 
     
     broker_node.cmd('pkill broker.py') # FIXME robust?

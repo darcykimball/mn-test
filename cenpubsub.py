@@ -23,6 +23,7 @@ ID_KEY = 'ID'
 TOPICS_KEY = 'TOPICS'
 
 MAX_CONN = 5
+RECV_BUFSIZ= 4096
 
 
 # Message types

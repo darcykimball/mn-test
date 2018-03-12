@@ -14,9 +14,6 @@ class Broker:
     Centralized (singleton) broker functionality
     '''
 
-    RECV_BUFSIZ = 4096
-
-
     def __init__(self, ip, port, topics=[]):
         self.ip = ip 
         self.port = port
@@ -24,17 +21,16 @@ class Broker:
         self.subscribers = dict() # Mapping of topics to subscriber addresses
         self.sub_addrs = dict() # Mapping of subscriber IDs to addresses (IP/port)
         # Listen for connections
-        self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.send_sock.bind((self.ip, self.port))
-        self.send_sock.listen(cps.MAX_CONN)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind((self.ip, self.port))
+        self.sock.listen(cps.MAX_CONN)
 
 
     def start(self):
 
         while True:
-            conn_sock = self.send_sock.accept()
-            received, sender_addr = conn_sock.recvfrom(RECV_BUFSIZ)
-            sender_ip, _ = sender_addr
+            sender_ip, _ = self.sock.accept()
+            received = self.sock.recv(cps.RECV_BUFSIZ)
 
             msg = dict()
             try:
