@@ -67,7 +67,7 @@ class PublishMsg():
     
     def to_json(self):
         d = {
-            SUB_MSG_KEY: {
+            PUB_MSG_KEY: {
                 TOPICS_KEY: self.topics
             }
         }
@@ -95,3 +95,7 @@ class EventMsg():
         }
 
         return json.dumps(d, indent=4)
+
+
+class BadPubSubMsgError(Exception):
+    pass

@@ -25,7 +25,7 @@ class Publisher():
         self.pub_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.pub_sock.connect((self.broker_ip, self.broker_port))
 
-        self.pub_sock.send(cps.EventMsg(topic, payload).to_json())
+        self.pub_sock.send(cps.PublishMsg(topic, payload).to_json())
 
 
     # For testing

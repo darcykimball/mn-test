@@ -47,13 +47,14 @@ class Broker:
                 msg = json.loads(received)
                 print 'message is good: ', msg
 
-                reply_msg = self.handle_msg(msg)
-            except TypeError:
+                self.handle_msg(msg, sender_ip)
+            except TypeError as e:
                 # Ignore this
-                print 'got bad JSON! Ignoring...'
-            except BadPubSubMsg:
+                print 'got bad JSON!: ', e
+                print 'Ignoring...'
+            except cps.BadPubSubMsgError as e:
                 # Ignore this too
-                print 'got a malformed message! ignoring...'
+                print 'got a bad msg: ', e
 
 
     def forward_event(self, pub_msg):
@@ -62,20 +63,25 @@ class Broker:
         '''
 
         print 'going to forward publshed event...'
-        for t in pub_msg.topics:
+        for t in pub_msg[cps.TOPICS_KEY]:
             print 'for topic %s...' % t
-            sub_ips = self.subscribers[t]
+            sub_ips = self.subscribers.get(t)
+
+            if sub_ips is None:
+                print 'no subs for this topic, moving on...'
+                continue
+
             print '...we have subscribers' , sub_ips
 
             for ip in sub_ips:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 print 'attempting to connect to ', ip
-                s.connect((ip, SUB_PORT))
+                s.connect((ip, cps.SUB_PORT))
                 print 'connected!'
 
                 print 'forwarding event...'
-                s.send(EventMsg(t, pub_msg.msg).to_json())
-                print 'forwared!'
+                s.send(cps.EventMsg(t, pub_msg.msg).to_json())
+                print 'forwarded!'
     
 
     def handle_msg(self, msg, sender_ip):
@@ -86,30 +92,29 @@ class Broker:
         '''
         
         try:
-            if SUB_MSG_KEY in msg:
+            if cps.SUB_MSG_KEY in msg:
                 # Add a new subscription or update subscriptions
-                sub_msg = msg[SUB_MSG_KEY]
+                sub_msg = msg[cps.SUB_MSG_KEY]
                 
                 # Update and/or add subscriptions
                 # FIXME: check set difference of topics?
-                for t in sub_msg[TOPICS_KEY]:
+                for t in sub_msg[cps.TOPICS_KEY]:
                     if self.subscribers.get(t):
                         self.subscribers[t].append(sender_ip)
                     else:
                         self.subscribers[t] = [sender_ip]
 
-            elif PUB_MSG_KEY in msg:
+            elif cps.PUB_MSG_KEY in msg:
                 # Forward to those who are subscribed
-                self.forward_event(msg)
+                self.forward_event(msg[cps.PUB_MSG_KEY])
             else:
-                raise BadPubSubMsgError('Unknown message type!')
+                raise cps.BadPubSubMsgError('Unknown message type!')
 
-        except KeyError:
-            raise BadPubSubMsgError('Malformed message!')
+        except KeyError as e:
+            print e
+            raise cps.BadPubSubMsgError('Malformed message!')
 
     
-    class BadPubSubMsgError(Exception):
-        pass
 
 
 if __name__ == '__main__':
