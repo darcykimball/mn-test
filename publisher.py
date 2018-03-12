@@ -14,15 +14,16 @@ class Publisher():
     '''
 
     
-    def __init__(self, broker_ip, port):
+    def __init__(self, broker_ip, broker_port):
         self.broker_ip = broker_ip
-        self.port = port
+        self.broker_port = broker_port
 
 
     def publish(self, topic, payload):
         # Setup socket for publishing to broker
+        print 'publishing to broker %s:%s' % (self.broker_ip, self.broker_port)
         self.pub_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.pub_sock.connect((self.broker_ip, self.port))
+        self.pub_sock.connect((self.broker_ip, self.broker_port))
 
         self.pub_sock.send(cps.EventMsg(topic, payload).to_json())
 
@@ -33,12 +34,13 @@ class Publisher():
         Publish a bell message every period, n times
         '''
 
+        print 'preparing to ring...'
         for i in xrange(n):
             try:
                 self.publish('bell', 'ring ring ring') 
                 time.sleep(1)
-            except:
-                print 'Trying to ring again...'
+            except socket.error as e:
+                print 'problem ringing: ', e
 
 
 if __name__ == '__main__':

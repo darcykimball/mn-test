@@ -41,15 +41,27 @@ class Subscriber:
 
     def start(self):
         # Try to join as a subscriber
+        print 'attempting to subscribe topics ', self.topics
+        print '...on broker %s:%s' % (self.broker_ip, self. broker_port)
         self.subscribe()
 
-        # Wait for messages
-        while True:
-            conn_sock = self.event_sock.accept()
-            event = self.conn_sock.recv(cps.RECV_BUFSIZ)
+        print '...subscribed!'
 
+        # Wait for messages
+        print 'waiting for events...'
+        while True:
+            conn_sock, (sender_ip, _) = self.event_sock.accept()
+            print 'got connection from %s' % sender_ip
+
+            event = self.conn_sock.recv(cps.RECV_BUFSIZ)
+            print 'got some bytes too:\n%s\n' % event
+
+
+            print 'attempting to parse event...'
             try:
                 msg = json.loads(event)
+                
+                print 'message is good: ', msg
                 self.recv_action(msg)
             except KeyError, TypeError:
                 print 'Got bogus message, ignoring...'

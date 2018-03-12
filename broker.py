@@ -29,16 +29,26 @@ class Broker:
     def start(self):
 
         while True:
-            sender_ip, _ = self.sock.accept()
-            received = self.sock.recv(cps.RECV_BUFSIZ)
+            print 'waiting for connections..'
+            conn_sock, (sender_ip, _) = self.sock.accept()
+            print 'got a connection from %s' % sender_ip
+
+            print 'receiving message...'
+            received = conn_sock.recv(cps.RECV_BUFSIZ)
+            print 'got something. message is:\n%s\n' % received
 
             msg = dict()
             try:
                 msg = json.loads(received)
+                print 'message is good: ', msg
+
                 reply_msg = self.handle_msg(msg)
             except TypeError:
                 # Ignore this
-                print 'Got bad JSON! Ignoring...'
+                print 'got bad JSON! Ignoring...'
+            except BadPubSubMsg:
+                # Ignore this too
+                print 'got a malformed message! ignoring...'
 
 
 
@@ -47,13 +57,21 @@ class Broker:
         Forward published events to subscribers
         '''
 
+        print 'going to forward publshed event...'
         for t in pub_msg.topics:
+            print 'for topic %s...' % t
             sub_ips = self.subscribers[t]
+            print '...we have subscribers' , sub_ips
+
             for ip in sub_ips:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                print 'attempting to connect to ', ip
                 s.connect((ip, SUB_PORT))
+                print 'connected!'
 
+                print 'forwarding event...'
                 s.send(EventMsg(t, pub_msg.msg).to_json())
+                print 'forwared!'
     
 
     def handle_msg(self, msg, sender_ip):
@@ -61,10 +79,7 @@ class Broker:
         Handle a publish or subscribe message.
         
         :param msg - An unpacked JSON (dict) message
-        :return - A set of reply messages
         '''
-
-        reply_msgs = list()
         
         try:
             if SUB_MSG_KEY in msg:
@@ -88,8 +103,6 @@ class Broker:
         except KeyError:
             raise BadPubSubMsgError('Malformed message!')
 
-
-        return reply_msgs
     
     class BadPubSubMsgError(Exception):
         pass

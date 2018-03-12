@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+
+import argparse
+import os
 import time
 
 from mininet.net import Mininet
@@ -12,11 +15,7 @@ from cenpubsub import BROKER_PORT
 from star import StarTopo
 
 
-SCRIPT_DIR = '/home/vagrant/test/'
-LOG_DIR = '/home/vagrant/mnlogs/'
-
-
-def test_cenpubsub(n=5):
+def test_cenpubsub(script_dir, log_dir, n=5):
     '''
     Test centralized pub/sub on a star topology (what else?)
     '''
@@ -31,20 +30,20 @@ def test_cenpubsub(n=5):
     broker_node = net.hosts[0]
     print 'mn: starting broker..'
     broker_node.sendCmd('%sbroker.py %s %s > %s 2>%s' %
-            (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'broker.out', LOG_DIR + 'broker.err'))
+            (script_dir, broker_node.IP(), BROKER_PORT, log_dir + 'broker.out', log_dir + 'broker.err'))
     time.sleep(1)
 
     # Setup subscribers
     print 'mn: starting hosts...'
     for host in net.hosts[2:]:
-        host.sendCmd('%ssubscriber.py %s %s %s bell > %s 2>%s' % (SCRIPT_DIR, host.IP(), broker_node.IP(), BROKER_PORT, LOG_DIR + host.name + '.out', LOG_DIR + host.name + '.err'))
+        host.sendCmd('%ssubscriber.py %s %s %s bell > %s 2>%s' % (script_dir, host.IP(), broker_node.IP(), BROKER_PORT, log_dir + host.name + '.out', log_dir + host.name + '.err'))
     
     time.sleep(1)
 
     
     pub_node = net.hosts[1]
     print 'mn: starting publisher'
-    pub_node.cmd('%spublisher.py %s %s > %s 2>%s' % (SCRIPT_DIR, broker_node.IP(), BROKER_PORT, LOG_DIR + 'pub.out', LOG_DIR + 'pub.err'))
+    pub_node.cmd('%spublisher.py %s %s > %s 2>%s' % (script_dir, broker_node.IP(), BROKER_PORT, log_dir + 'pub.out', log_dir + 'pub.err'))
 
     # Wait for stuff to happen
     time.sleep(n)
@@ -61,4 +60,18 @@ def test_cenpubsub(n=5):
     
 
 if __name__ == '__main__':
-    test_cenpubsub()
+    parser = argparse.ArgumentParser(description='A small test')
+    parser.add_argument('script_dir', type=str)
+    parser.add_argument('log_dir', type=str)
+
+    args = parser.parse_args()
+
+
+    # FIXME clean up
+    script_dir = os.path.abspath(args.script_dir) + '/'
+    log_dir = os.path.abspath(args.log_dir) + '/'
+
+    print script_dir
+    print log_dir
+
+    test_cenpubsub(script_dir, log_dir)
