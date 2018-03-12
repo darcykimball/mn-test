@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -u
 
 
 import argparse
@@ -15,21 +15,26 @@ class Broker:
     '''
 
     def __init__(self, ip, port, topics=[]):
+
+        print 'broker init'
         self.ip = ip 
         self.port = port
         self.topics = topics # Unused for now
         self.subscribers = dict() # Mapping of topics to subscriber addresses
         self.sub_addrs = dict() # Mapping of subscriber IDs to addresses (IP/port)
         # Listen for connections
+        print 'huh'
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.ip, self.port))
+
+        print 'uh'
         self.sock.listen(cps.MAX_CONN)
 
 
     def start(self):
-
+        print 'waiting for connections..'
         while True:
-            print 'waiting for connections..'
+            print '...'
             conn_sock, (sender_ip, _) = self.sock.accept()
             print 'got a connection from %s' % sender_ip
 
@@ -49,7 +54,6 @@ class Broker:
             except BadPubSubMsg:
                 # Ignore this too
                 print 'got a malformed message! ignoring...'
-
 
 
     def forward_event(self, pub_msg):
@@ -109,12 +113,17 @@ class Broker:
 
 
 if __name__ == '__main__':
+    #FIXME: remove
+    print 'BROKER: WTF'
+
     parser = argparse.ArgumentParser(description='Broker subscription requests and publish events.')
     parser.add_argument('ip', type=str)
     parser.add_argument('port', type=int)
 
     args = parser.parse_args()
 
+    # FIXME remove
+    print args
 
     # Run as a listening broker
     broker = Broker(args.ip, args.port)
