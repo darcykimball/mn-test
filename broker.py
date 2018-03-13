@@ -80,7 +80,7 @@ class Broker:
                 print 'connected!'
 
                 print 'forwarding event...'
-                s.send(cps.EventMsg(t, pub_msg.msg).to_json())
+                s.send(cps.EventMsg(t, pub_msg[cps.PAYLOAD_KEY]).to_json())
                 print 'forwarded!'
     
 

@@ -37,30 +37,26 @@ def test_cenpubsub(script_dir, log_dir, n=5):
     # Setup 1 broker and 1 publisher on first 2 nodes.
     broker_node = net.hosts[0]
 
-
-    # FIXME: REmove; this is a sanity check
-    broker_node.cmd('echo %s > %s' %
-            ('relatively sane', os.path.join(log_dir, 'sanity.out')))
-    broker_node.cmd(os.path.join(script_dir, 'wtf.py') + '>' + \
-            os.path.join(log_dir, 'wtf.out'))
-
-
     print 'mn: starting broker.. with ', broker_prog
     broker_node.cmd('%s %s %s >%s 2>%s &' %
         (broker_prog, broker_node.IP(), BROKER_PORT, \
         os.path.join(log_dir, 'broker.out'), \
         os.path.join(log_dir, 'broker.err')))
+
     
     # Wait for broker to start
-    time.sleep(2)
+    time.sleep(1)
     #waitListening(server=broker_node, port=BROKER_PORT, timeout=1)
 
     # Setup subscribers
-    #print 'mn: starting hosts...'
-    #for host in net.hosts[2:]:
-    #    host.cmd('%ssubscriber.py %s %s %s bell > %s 2>%s &' % (subscriber_prog, host.IP(), broker_node.IP(), BROKER_PORT, log_dir + host.name + '.out', log_dir + host.name + '.err'))
-    #
-    #time.sleep(1)
+    print 'mn: starting hosts...'
+    for host in net.hosts[2:]:
+        host.cmd('%s %s %s %s bell > %s 2>%s &' %
+            (subscriber_prog, host.IP(), broker_node.IP(), BROKER_PORT, \
+            os.path.join(log_dir, host.name + '.out'), \
+            os.path.join(log_dir, host.name + '.err')))
+    
+    time.sleep(1)
 
     
     pub_node = net.hosts[1]
@@ -77,8 +73,8 @@ def test_cenpubsub(script_dir, log_dir, n=5):
     broker_node.cmd('pkill broker.py') # FIXME robust?
     print 'broker cleaned up'
 
-    #for host in net.hosts[2:]:
-    #    host.cmd('pkill subscriber.py') # FIXME robust?
+    for host in net.hosts[2:]:
+        host.cmd('pkill subscriber.py') # FIXME robust?
 
     # FIXME: pub_node is hopefully dead already?
     print 'kiling publisher...'

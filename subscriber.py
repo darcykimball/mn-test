@@ -2,10 +2,17 @@
 
 
 import argparse
+import json
 import socket
 import sys
 
 import cenpubsub as cps
+
+
+# Utility wrapper since we're not in python3
+def printer(*args):
+    for a in args:
+        print a
 
 
 class Subscriber:
@@ -14,7 +21,7 @@ class Subscriber:
     '''
 
 
-    def __init__(self, ip, broker_ip, port, topics, recv_action=sys.stdout.write):
+    def __init__(self, ip, broker_ip, port, topics, recv_action=printer):
         self.ip = ip
         self.broker_ip = broker_ip
         self.broker_port = port
@@ -53,7 +60,7 @@ class Subscriber:
             conn_sock, (sender_ip, _) = self.event_sock.accept()
             print 'got connection from %s' % sender_ip
 
-            event = self.conn_sock.recv(cps.RECV_BUFSIZ)
+            event = conn_sock.recv(cps.RECV_BUFSIZ)
             print 'got some bytes too:\n%s\n' % event
 
 

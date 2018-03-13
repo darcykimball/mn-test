@@ -60,15 +60,16 @@ class PublishMsg():
     '''
 
     
-    def __init__(self, topic, msg):
+    def __init__(self, topic, payload):
         self.topics = [topic]
-        self.msg = msg
+        self.payload = payload
 
     
     def to_json(self):
         d = {
             PUB_MSG_KEY: {
-                TOPICS_KEY: self.topics
+                TOPICS_KEY: self.topics,
+                PAYLOAD_KEY: self.payload
             }
         }
 
